@@ -1,14 +1,12 @@
 ﻿using System;
-using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using Lykke.Job.AzureTableCheck.Settings;
-using Newtonsoft.Json;
 using System.Linq;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Job.AzureTableCheck.PeriodicalHandlers
 {
@@ -25,32 +23,75 @@ namespace Lykke.Job.AzureTableCheck.PeriodicalHandlers
         {
             // TODO: Orchestrate execution flow here and delegate actual business logic implementation to services layer
             // Do not implement actual business logic here
+            //try
+            //{
+            //    var request = WebRequest.Create(AppSettings.SettingsApiLink) as HttpWebRequest;
+            //    var json = "";
+            //    using (var response = request.GetResponse() as HttpWebResponse)
+            //    {
+            //        var reader = new StreamReader(response.GetResponseStream());
+            //        json = reader.ReadToEnd();
+            //    }
 
-            HttpWebRequest request = WebRequest.Create(AppSettings.SettingsApiLink) as HttpWebRequest;
-            string json = "";
-            using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+            //    var result = JArray.Parse(json);
+            //    var azureTableList = result.ToList();
+
+            //    foreach (var str in azureTableList)
+            //    {
+            //        Console.WriteLine(str);
+            //    }
+
+            //    Console.WriteLine("Repeat after - " + AppSettings.CheckPeriodInSeconds + " seconds");
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine(ex);
+            //    await Task.CompletedTask;
+            //}
+
+            // Parse the connection string and return a reference to the storage account.
+
+            var t = await GetTablesNameForAzureSubscription("DefaultEndpointsProtocol=https;AccountName=lkedevsettings;AccountKey=Ztpq2z5ieCo7H5Yp4GUJpWXmIqTrXe25dkJBmlnBp0g8IfrRaVV4H67EjbAFjNC8kbZEMU0TvkFGsMRVrFuvXQ==");
+
+            foreach(var tt in t)
             {
-                StreamReader reader = new StreamReader(response.GetResponseStream());
-                json = reader.ReadToEnd();
-                Console.WriteLine(json);
+                Console.WriteLine(tt);
+                Console.WriteLine(await NumberOfRows(tt, "DefaultEndpointsProtocol=https;AccountName=lkedevsettings;AccountKey=Ztpq2z5ieCo7H5Yp4GUJpWXmIqTrXe25dkJBmlnBp0g8IfrRaVV4H67EjbAFjNC8kbZEMU0TvkFGsMRVrFuvXQ=="));
             }
-
-            var result = JsonConvert.DeserializeObject<string>(json);
-            //Console.WriteLine(result);
-            var azureTableList = result.ToList();
-
-            Console.WriteLine(result);
-
-            foreach (var str in azureTableList)
-            {
-                Console.WriteLine(str);
-            }
-
-            Console.WriteLine("Repeat after - " + AppSettings.CheckPeriodInSeconds);
-
-
 
             await Task.CompletedTask;
+        }
+
+        private static async Task<List<string>> GetTablesNameForAzureSubscription(string connectionString)
+        {
+            CloudStorageAccount account = CloudStorageAccount.Parse(connectionString);
+            CloudTableClient tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
+            TableContinuationToken token = null;
+            var tableList = new List<string>();
+            do
+            {
+                var segmentedTablesList = await tableClient.ListTablesSegmentedAsync(token);
+                tableList.AddRange(segmentedTablesList.Results.Select(x => x.Name));
+                token = segmentedTablesList.ContinuationToken;
+            } while (token != null);
+
+            return tableList;
+        }
+
+        private static async Task<int> NumberOfRows(string tableName, string connectionString)
+        {
+            CloudStorageAccount account = CloudStorageAccount.Parse(connectionString);
+            CloudTableClient tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
+            var table = tableClient.GetTableReference(tableName);
+            TableContinuationToken token = null;
+            var _numberOfRows = 0;
+            do
+            {
+                var queryResult = await table.ExecuteQuerySegmentedAsync(new TableQuery(), token);
+                _numberOfRows += queryResult.Count();
+                token = queryResult.ContinuationToken;
+            } while (token != null);
+            return _numberOfRows;
         }
     }
 }
