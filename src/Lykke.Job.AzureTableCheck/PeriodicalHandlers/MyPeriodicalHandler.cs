@@ -30,26 +30,49 @@ namespace Lykke.Job.AzureTableCheck.PeriodicalHandlers
 
         public override async Task Execute()
         {
-            // TODO: Orchestrate execution flow here and delegate actual business logic implementation to services layer
-            // Do not implement actual business logic here
-
             var azureTableList = _azureTableCheck.GetAzureTableConnectionStrings(AppSettings.SettingsApiLink);            
 
-            foreach (var str in azureTableList)
+            foreach (var azureStorage in azureTableList)
             {
-                Console.WriteLine("Connection string>" + str);
-                var t = await _azureTableCheck.GetTablesNameForAzureSubscription(str.ToString());
+                var tableList = await _azureTableCheck.GetTablesNameForAzureSubscription(azureStorage);
 
-                foreach (var tt in t)
+                if (tableList.Count != 0)
                 {
-                    Console.WriteLine("---Table>" + tt);
-                    Console.WriteLine("---Number of rows>" + await _azureTableCheck.NumberOfRows(tt, str.ToString()));
+                    var account = CloudStorageAccount.Parse(azureStorage);
+                    Console.WriteLine($"Checking storage \"{account.Credentials.AccountName}\" STARTED.");                
+
+                    var badTables = new List<string>();
+
+                    foreach (var tableName in tableList)
+                    {
+                        var rowsInTable = await _azureTableCheck.NumberOfRows(tableName, azureStorage);
+                        if (rowsInTable > AppSettings.MaxEntitiesInOneTable)
+                        {
+                            //TODO: Send messages about problem                       
+                            badTables.Add(tableName);
+                        }
+                    }
+
+                    if (badTables.Count != 0)
+                    {
+                        var badTablesStr = "";
+
+                        foreach(var name in badTables)
+                        {
+                            badTablesStr += $"{name}, ";
+                        }
+                        Console.WriteLine($"Checking storage \"{account.Credentials.AccountName}\" FINISHED. Partitions total: {tableList.Count}. Partitions with size more than {AppSettings.MaxEntitiesInOneTable}: {badTablesStr} ");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Checking storage \"{account.Credentials.AccountName}\" FINISHED. Partitions total: {tableList.Count}. There are no partitions with size more than {AppSettings.MaxEntitiesInOneTable}.");
+                    }
+
                 }
-            }
 
-            Console.WriteLine("DONE! Repeat after - " + AppSettings.CheckPeriodInSeconds + " seconds");
+
+            }        
             
-
             await Task.CompletedTask;
         }        
     }

@@ -23,12 +23,20 @@ namespace Lykke.Job.AzureTableCheck.Services
                 var tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
                 TableContinuationToken token = null;
 
-                do
+                try
                 {
-                    var segmentedTablesList = await tableClient.ListTablesSegmentedAsync(token);
-                    tableList.AddRange(segmentedTablesList.Results.Select(x => x.Name));
-                    token = segmentedTablesList.ContinuationToken;
-                } while (token != null);                
+                    do
+                    {
+                        var segmentedTablesList = await tableClient.ListTablesSegmentedAsync(token);
+                        tableList.AddRange(segmentedTablesList.Results.Select(x => x.Name));
+                        token = segmentedTablesList.ContinuationToken;
+                    } while (token != null);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+                                
             }
             return tableList;
         }
@@ -40,14 +48,22 @@ namespace Lykke.Job.AzureTableCheck.Services
             {
                 var tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
                 var table = tableClient.GetTableReference(tableName);
-                TableContinuationToken token = null;
+                var tableQuery = new TableQuery();  
                 
-                do
+                TableContinuationToken token = null;
+                try
                 {
-                    var queryResult = await table.ExecuteQuerySegmentedAsync(new TableQuery(), token);
-                    _numberOfRows += queryResult.Count();
-                    token = queryResult.ContinuationToken;
-                } while (token != null);
+                    do
+                    {
+                        var queryResult = await table.ExecuteQuerySegmentedAsync(tableQuery.Select(new List<string> { "PartitionKey","RowKey","Timestamp" }), token);
+                        _numberOfRows += queryResult.Results.Count;
+                        token = queryResult.ContinuationToken;
+                    } while (token != null);
+                }                
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
             return _numberOfRows;
         }
