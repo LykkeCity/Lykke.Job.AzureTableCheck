@@ -1,4 +1,5 @@
-﻿using Lykke.Job.AzureTableCheck.Core.Services;
+﻿using Common.Log;
+using Lykke.Job.AzureTableCheck.Core.Services;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json.Linq;
@@ -14,8 +15,14 @@ namespace Lykke.Job.AzureTableCheck.Services
     public class AzureTableCheck: IAzureTableCheck
     {
         private CloudStorageAccount account;
+        private readonly ILog _log;
 
-        public async Task<List<string>> GetTablesNameForAzureSubscription(string connectionString)
+        public AzureTableCheck(ILog log)
+        {
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+        }
+
+        public async Task<List<string>> GetTableNames(string connectionString)
         {
             var tableList = new List<string>();
             if (CloudStorageAccount.TryParse(connectionString, out account))
@@ -34,14 +41,14 @@ namespace Lykke.Job.AzureTableCheck.Services
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    await _log.WriteErrorAsync(nameof(AzureTableCheck), $"Getting table names - account:\"{account.Credentials.AccountName}\"", e);
                 }
                                 
             }
             return tableList;
         }
 
-        public async Task<int> NumberOfRows(string tableName, string connectionString)
+        public async Task<int> GetNumberOfRows(string tableName, string connectionString)
         {
             var _numberOfRows = 0;
             if (CloudStorageAccount.TryParse(connectionString, out account))
@@ -62,13 +69,13 @@ namespace Lykke.Job.AzureTableCheck.Services
                 }                
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    await _log.WriteErrorAsync(nameof(AzureTableCheck), $"Getting number of rows from table:\"{tableName}\"", e);
                 }
             }
             return _numberOfRows;
         }
 
-        public List<string> GetAzureTableConnectionStrings(string apiUrl)
+        public async Task<List<string>> GetAzureTableConnectionStrings(string apiUrl)
         {
             var azureTableList = new List<string>();
             try
@@ -88,15 +95,12 @@ namespace Lykke.Job.AzureTableCheck.Services
                     azureTableList.Add(str.ToString());
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine(ex);
+                await _log.WriteErrorAsync(nameof(AzureTableCheck), $"Getting AzureConnectionStrings from Settings Service(API:{apiUrl})", e);
             }
 
             return azureTableList;
-            // Parse the connection string and return a reference to the storage account.
-
-
         }
     }
 }

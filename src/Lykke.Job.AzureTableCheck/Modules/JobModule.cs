@@ -63,7 +63,7 @@ namespace Lykke.Job.AzureTableCheck.Modules
         {
             // TODO: You should register each periodical handler in DI container as IStartable singleton and autoactivate it
 
-            builder.RegisterType<MyPeriodicalHandler>()
+            builder.RegisterType<AzureTableCheckHandler>()
                 .As<IStartable>()
                 .AutoActivate()
                 .SingleInstance();
