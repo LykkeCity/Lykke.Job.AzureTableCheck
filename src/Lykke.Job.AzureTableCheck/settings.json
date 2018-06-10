@@ -1,0 +1,22 @@
+{
+  //"SecTokenPassword": "TestPwd",
+  //"Db": "DbConnStr"
+  "AzureTableCheckJob": {
+    "Db": {
+      "LogsConnString": "UseDevelopmentStorage=true"
+    }
+
+
+  },
+  "SettingsApiLink": "http://",
+  "CheckPeriodInSeconds": 604800,
+  "MaxEntitiesInOneTable": 100000,
+  "NumberOfRetries": 5,
+  "SlackNotifications": {
+    "AzureQueue": {
+      "ConnectionString": "UseDevelopmentStorage=true",
+      "QueueName": "slack-notifications"
+    },
+    "ThrottlingLimitSeconds": 60
+  }
+}

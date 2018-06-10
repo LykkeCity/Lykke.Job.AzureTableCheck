@@ -1,0 +1,25 @@
+{
+  "profiles": {
+    "AzureTableCheck local dev settings": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Code\\Repos\\Lykke.Job.AzureTableCheck\\src\\Lykke.Job.AzureTableCheck",
+      "environmentVariables": {
+        "SettingsUrl": "settings.json",
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "AzureTableCheck local test settings": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "SettingsUrl": "token_to_test_settings",
+        "ASPNETCORE_ENVIRONMENT": "Staging"
+      }
+    },
+    "AzureTableCheck remote settings": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "SettingsUrl": "http://settings.lykke-settings.svc.cluster.local/your_token_AzureTableCheckJob"
+      }
+    }
+  }
+}

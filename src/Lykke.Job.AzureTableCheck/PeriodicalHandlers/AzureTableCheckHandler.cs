@@ -64,7 +64,7 @@ namespace Lykke.Job.AzureTableCheck.PeriodicalHandlers
                         {                      
                             badTables.Add(tableName);
                         }
-                        await _log.WriteInfoAsync(nameof(AzureTableCheckHandler), "Check table", $"Check table {tableName} FINISHED. Size: {rowsInTable}.");
+                        //await _log.WriteInfoAsync(nameof(AzureTableCheckHandler), "Check table", $"Check table {tableName} FINISHED. Size: {rowsInTable}.");
                     }
 
                     if (badTables.Count != 0)
