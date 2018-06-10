@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Job.AzureTableCheck.Core.Services
 {
-    public interface IAzureTableCheck
+    public interface IAzureTableCheckService
     {
         Task<List<string>> GetTableNames(string connectionString);
         Task<int> GetNumberOfRows(string tableName, string connectionString);

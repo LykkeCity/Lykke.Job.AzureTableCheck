@@ -49,8 +49,8 @@ namespace Lykke.Job.AzureTableCheck.Modules
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>();
 
-            builder.RegisterType<Services.AzureTableCheck>()
-                .As<IAzureTableCheck>();
+            builder.RegisterType<Services.AzureTableCheckService>()
+                .As<IAzureTableCheckService>();
 
             RegisterPeriodicalHandlers(builder);
 

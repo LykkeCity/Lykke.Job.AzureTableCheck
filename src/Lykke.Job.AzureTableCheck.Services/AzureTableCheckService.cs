@@ -12,12 +12,12 @@ using System.Threading.Tasks;
 
 namespace Lykke.Job.AzureTableCheck.Services
 {
-    public class AzureTableCheck: IAzureTableCheck
+    public class AzureTableCheckService: IAzureTableCheckService
     {
         private CloudStorageAccount account;
         private readonly ILog _log;
 
-        public AzureTableCheck(ILog log)
+        public AzureTableCheckService(ILog log)
         {
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
@@ -41,7 +41,7 @@ namespace Lykke.Job.AzureTableCheck.Services
                 }
                 catch (Exception e)
                 {
-                    await _log.WriteErrorAsync(nameof(AzureTableCheck), $"Getting table names - account:\"{account.Credentials.AccountName}\"", e);
+                    await _log.WriteErrorAsync(nameof(AzureTableCheckService), $"Getting table names - account:\"{account.Credentials.AccountName}\"", e);
                 }
                                 
             }
@@ -61,15 +61,15 @@ namespace Lykke.Job.AzureTableCheck.Services
                 try
                 {
                     do
-                    {
-                        var queryResult = await table.ExecuteQuerySegmentedAsync(tableQuery.Select(new List<string> { "PartitionKey","RowKey","Timestamp" }), token);
+                    {                        
+                        var queryResult = await table.ExecuteQuerySegmentedAsync(tableQuery.Select(new List<string> { "PartitionKey" }), token);
                         _numberOfRows += queryResult.Results.Count;
                         token = queryResult.ContinuationToken;
                     } while (token != null);
                 }                
                 catch (Exception e)
                 {
-                    await _log.WriteErrorAsync(nameof(AzureTableCheck), $"Getting number of rows from table:\"{tableName}\"", e);
+                    await _log.WriteErrorAsync(nameof(AzureTableCheckService), $"Getting number of rows from table:\"{tableName}\"", e);
                 }
             }
             return _numberOfRows;
@@ -97,7 +97,7 @@ namespace Lykke.Job.AzureTableCheck.Services
             }
             catch (Exception e)
             {
-                await _log.WriteErrorAsync(nameof(AzureTableCheck), $"Getting AzureConnectionStrings from Settings Service(API:{apiUrl})", e);
+                await _log.WriteErrorAsync(nameof(AzureTableCheckService), $"Getting AzureConnectionStrings from Settings Service(API:{apiUrl})", e);
             }
 
             return azureTableList;

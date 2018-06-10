@@ -16,10 +16,10 @@ namespace Lykke.Job.AzureTableCheck.PeriodicalHandlers
 {
     public class AzureTableCheckHandler : TimerPeriod
     {
-        private readonly IAzureTableCheck _azureTableCheck;
+        private readonly IAzureTableCheckService _azureTableCheck;
         private readonly ILog _log;
 
-        public AzureTableCheckHandler(ILog log, IAzureTableCheck azureTableCheck) :
+        public AzureTableCheckHandler(ILog log, IAzureTableCheckService azureTableCheck) :
             base(nameof(AzureTableCheckHandler), (int)TimeSpan.FromSeconds(AppSettings.CheckPeriodInSeconds).TotalMilliseconds, log)
         {
             _log = log;
