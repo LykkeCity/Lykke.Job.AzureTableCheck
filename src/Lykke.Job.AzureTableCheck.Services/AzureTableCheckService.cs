@@ -1,4 +1,5 @@
-﻿using Common.Log;
+﻿using AzureStorage;
+using Common.Log;
 using Lykke.Job.AzureTableCheck.Core.Services;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -9,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+
 
 namespace Lykke.Job.AzureTableCheck.Services
 {
@@ -42,36 +44,31 @@ namespace Lykke.Job.AzureTableCheck.Services
                 catch (Exception e)
                 {
                     await _log.WriteErrorAsync(nameof(AzureTableCheckService), $"Getting table names - account:\"{account.Credentials.AccountName}\"", e);
-                }
-                                
+                }                                
             }
             return tableList;
         }
 
-        public async Task<int> GetNumberOfRows(string tableName, string connectionString)
+        public async Task<int> GetNumberOfRows(INoSQLTableStorage<TableEntity> tableStorage, int numberOfRetries)
         {
             var _numberOfRows = 0;
-            if (CloudStorageAccount.TryParse(connectionString, out account))
+
+            for(int i = numberOfRetries; i > 0; i--)
             {
-                var tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
-                var table = tableClient.GetTableReference(tableName);
-                var tableQuery = new TableQuery();  
-                
-                TableContinuationToken token = null;
                 try
                 {
-                    do
-                    {                        
-                        var queryResult = await table.ExecuteQuerySegmentedAsync(tableQuery.Select(new List<string> { "PartitionKey" }), token);
-                        _numberOfRows += queryResult.Results.Count;
-                        token = queryResult.ContinuationToken;
-                    } while (token != null);
-                }                
-                catch (Exception e)
-                {
-                    await _log.WriteErrorAsync(nameof(AzureTableCheckService), $"Getting number of rows from table:\"{tableName}\"", e);
+                    var tableQuery = new TableQuery<TableEntity>();
+                    await tableStorage.GetDataByChunksAsync(tableQuery.Select(new List<string> { "PartitionKey" }), items => { _numberOfRows += items.Count(); });
                 }
+
+                catch(Exception e)
+                {
+                    await _log.WriteErrorAsync(nameof(AzureTableCheckService), $"Getting number of rows. Table:\"{tableStorage.Name}\"", e);
+                }
+
             }
+
+
             return _numberOfRows;
         }
 

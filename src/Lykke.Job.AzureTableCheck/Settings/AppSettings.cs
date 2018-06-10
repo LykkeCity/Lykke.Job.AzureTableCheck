@@ -14,6 +14,8 @@ namespace Lykke.Job.AzureTableCheck.Settings
 
         public static int MaxEntitiesInOneTable { get; set; }
 
+        public static int NumberOfRetries { get; set; }
+
         public SlackNotificationsSettings SlackNotifications { get; set; }
 
 
